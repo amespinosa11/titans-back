@@ -7,15 +7,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
 const routes = require("./services/example/api")
+const estrategiaRoutes = require("./services/estrategia/api")
 
 app.use("/testingTool", routes);
+app.use("/estrategias", estrategiaRoutes);
 
-/*app.put('/usuario', function (req, res) {
-   res.send(respuesta);
-});
-app.delete('/usuario', function (req, res) {
-    res.send(respuesta);
-});*/
 
 app.listen(3000, () => {
   console.log('Example app listening on port 3000!');

@@ -1,55 +1,73 @@
 const express = require("express");
 const router  = express.Router();
+const status = require('http-status');
 const testingModel = require('./model');
 const TestingModel = new testingModel();
 
 router.get("/getVersions", async (req, res) => {
-
-    let versions = await TestingModel.getVersions();
-    console.log(versions);
-    res.send(versions)
-    
+    try {
+        let versions = await TestingModel.getVersions();
+        console.log(versions);
+        res.status(status.OK).json({code: 200, data: versions});
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+    }  
 });
 router.get("/getApplications", async (req, res) => {
-
-    let applications = await TestingModel.getApplications();
-    console.log(applications);
-    res.send(applications)
-    
+    try {
+        let applications = await TestingModel.getApplications();
+        console.log(applications);
+        res.status(status.OK).json({code: 200, data: applications});
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+    }
 });
 router.get("/getToolsAvailable", async (req, res) => {
-
-    let toolsAvailable = await TestingModel.getToolsAvailable();
-    console.log(toolsAvailable);
-    res.send(toolsAvailable)
-    
+    try {
+        let toolsAvailable = await TestingModel.getToolsAvailable();
+        console.log(toolsAvailable);
+        res.status(status.OK).json({code: 200, data: toolsAvailable});
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+    }    
 });
 router.get("/getTypeOfTests", async (req, res) => {
-
-    let typeOfTests = await TestingModel.getTypeOfTests();
-    console.log(typeOfTests);
-    res.send(typeOfTests)    
+    try {
+        let typeOfTests = await TestingModel.getTypeOfTests();
+        console.log(typeOfTests);
+        res.status(status.OK).json({code: 200, data: typeOfTests});
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+    }
 });
 router.get("/getStrategies", async (req, res) => {
-
-    let strategies = await TestingModel.getStrategies();
-    console.log(strategies);
-    res.send(strategies)    
+    try {
+        let strategies = await TestingModel.getStrategies();
+        console.log(strategies);
+        res.status(status.OK).json({code: 200, data: strategies});  
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+    }
 });
 
 router.get("/getTestState/:testId", async (req, res) => {
-    
-    console.log(req.params.testId);
-    let state = await TestingModel.getTestState(req.params.testId);
-    console.log(state);
-    res.send(state)   
+    try {
+        console.log(req.params.testId);
+        let state = await TestingModel.getTestState(req.params.testId);
+        res.status(status.OK).json({code: 200, data: state});
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+    }
 });
 router.get("/getTestResult/:testId", async (req, res) => {
-    
-    console.log(req.params.testId);
-    let result = await TestingModel.getTestResult(req.params.testId);
-    console.log(result);
-    res.send(result)   
+    try {
+        console.log(req.params.testId);
+        let result = await TestingModel.getTestResult(req.params.testId);
+        console.log(result);
+        res.status(status.OK).json({code: 200, data: result});  
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+    }  
 });
 
 router.post('/usuario', function (req, res) {
@@ -57,4 +75,4 @@ router.post('/usuario', function (req, res) {
     res.send('POST request to homepage')
 });
 
-module.exports = router
+module.exports = router;
