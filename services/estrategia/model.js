@@ -159,6 +159,7 @@ class EstrategiaModel {
 
     async insertScript(script) {
         try {
+            script.script_file = '';
             let nuevoScript = await db('script').returning('id_script').insert(script);
             console.log('RESULTADO AL CREAR SCRIPT : ', nuevoScript);
         } catch (error) {
