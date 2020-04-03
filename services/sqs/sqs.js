@@ -15,7 +15,41 @@ class SQS {
     sendMessage = async(message,queueUrl) => {
         let d = q.defer();
         const params = {
-            MessageBody: message,
+            MessageAttributes: {
+                "idPrueba": {
+                    DataType: "Number",
+                    StringValue: JSON.stringify(message.idPrueba)
+                },
+                "esScript": {
+                    DataType: "String",
+                    StringValue: JSON.stringify(message.esScript)
+                },
+                "scriptFile": {
+                    DataType: "String",
+                    StringValue: message.scriptFile
+                },
+                "tipo": {
+                    DataType: "String",
+                    StringValue: message.tipo
+                },
+                "herramienta": {
+                    DataType: "String",
+                    StringValue: message.herramienta
+                },
+                "modo": {
+                    DataType: "String",
+                    StringValue: message.modo
+                },
+                "navegador": {
+                    DataType: "String",
+                    StringValue: message.navegador
+                },
+                "resolucion": {
+                    DataType: "String",
+                    StringValue: message.resolucion
+                }
+            },
+            MessageBody: `${message.idPrueba}-${message.tipo}-${message.herramienta}-${message.modo}`,
             QueueUrl: queueUrl,
             DelaySeconds: 0
         };

@@ -1,4 +1,6 @@
 const db = require("../../config");
+const fs = require('file-system');
+const moment = require('moment');
 
 class EstrategiaModel {
 
@@ -159,7 +161,9 @@ class EstrategiaModel {
 
     async insertScript(script) {
         try {
-            script.script_file = '';
+            //script.script_file = '';
+            this.saveFile(script.script_file);
+            script.script_file = 'prueba.js';
             let nuevoScript = await db('script').returning('id_script').insert(script);
             console.log('RESULTADO AL CREAR SCRIPT : ', nuevoScript);
         } catch (error) {
@@ -177,6 +181,88 @@ class EstrategiaModel {
             console.log(error);
             throw error;
         }
+    }
+
+    saveFile(file) {
+        const base64Data = file.replace(/^data:text\/javascript;base64,/, "");
+        let f = new Buffer(base64Data, 'base64');
+        // Falta colocar nombre de script unico
+        fs.writeFile("../files/prueba.js", f, 'base64', function(err) {
+            console.log(err);
+        });
+    }
+
+    async getPendingTests() {
+        let pruebasMandar = [];
+        const ahora = moment().subtract(2, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+        const despues = moment().add(5, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+        let tests = await db.select('*').from('prueba').whereRaw(`estado='pendiente'AND fecha_ejecucion BETWEEN ? and ?`, [ahora,despues])
+        .limit(1);
+
+
+        let prueba = null;
+        if(tests.length > 0) {
+            let test = tests[0];
+            // cambiar estado
+            let estado = await this.actualizarEstadoPrueba(test.id_prueba, 'enCola');
+            // Buscar info de matriz de prueba
+            const matriz = await db.select('*').from('matriz_prueba').where('id_matriz_prueba', test.id_matriz_prueba);
+            console.log(matriz);
+            // Buscar si tiene scripts
+            if(parseInt(test.cantidad_ejecuciones) === 0) {
+                // Busco todos los scripts
+                let scripts = await this.processScripts(test, matriz[0]);
+                pruebasMandar = scripts;
+                //console.log(scripts);
+            } else {
+                // Armar la prueba 
+                prueba = {
+                    idPrueba: test.id_prueba,
+                    esScript: false,
+                    cantidadEjecuciones: parseInt(test.cantidad_ejecuciones),
+                    scriptFile: '',
+                    tipo: test.tipo,
+                    herramienta: test.herramienta,
+                    modo: test.modo,
+                    navegador: matriz[0].navegador,
+                    resolucion: matriz[0].resolucion
+                }
+                pruebasMandar.push(prueba);
+            }
+        }
+        console.log('PRUEBAS A MANDAR ', pruebasMandar);
+        return pruebasMandar;
+    }
+
+    async processScripts(test, matriz) {
+        let pruebas = [];
+        const scripts = await db.select('*').from('script').where('id_prueba', test.id_prueba);
+        let prueba = null;
+        for(let script of scripts) {
+            prueba = {
+                idPrueba: test.id_prueba,
+                esScript: true,
+                cantidadEjecuciones: parseInt(script.cant_ejecuciones),
+                scriptFile: script.script_file,
+                tipo: test.tipo,
+                herramienta: test.herramienta,
+                modo: test.modo,
+                navegador: matriz.navegador,
+                resolucion: matriz.resolucion
+            }
+            pruebas.push(prueba);
+        }
+        return pruebas;
+    }
+
+    async actualizarEstadoPrueba(idPrueba, estado) {
+        const actualizarEstado = await db('prueba')
+        .where('id_prueba', '=', idPrueba)
+        .update({
+          estado: estado,
+          thisKeyIsSkipped: undefined
+        });
+        console.log('ESTADO: ', actualizarEstado);
     }
 
 }

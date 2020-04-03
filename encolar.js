@@ -1,10 +1,14 @@
 const SQS = require('./services/sqs/sqs');
 const sqs = new SQS();
 
+const estrategiaModel = require('./services/estrategia/model');
+const EstrategiaModel = new estrategiaModel();
+
 // Encolar mensajes
 const encolarMensajes = async(mensaje, cola) => {
     let a = await sqs.sendMessage(mensaje,cola);
     console.log('Encolar mensaje ',a);
+    return a;
 }
 
 const desencolarMensajes = async(cola) => {
@@ -22,7 +26,23 @@ const eliminarMensaje = async(cola,receipt) => {
     console.log(a);
 }
 
+const obtenerPruebasPendientes = async() => {
+    const pruebas = await EstrategiaModel.getPendingTests();
+    if(pruebas.length > 0) {
+        let prueba = pruebas[0];
+        let fallo = false;
+        for(let i = 0; i < prueba.cantidadEjecuciones && !fallo; i++) {
+            let encolar = await encolarMensajes(prueba, `${process.env.ROOT_QUEUE}/${prueba.herramienta}`)
+            if(encolar.code !== 100) {
+                await EstrategiaModel.actualizarEstadoPrueba(prueba.idPrueba, 'pendiente');
+                fallo = true;
+            }
+        }
+    }
+}
+
+obtenerPruebasPendientes();
 //encolarMensajes('Hello Home2!', '');
 //obtenerCantidadMensajes('');
-//desencolarMensajes('');
+//desencolarMensajes(``);
 //eliminarMensaje('', '');
