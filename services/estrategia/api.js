@@ -21,6 +21,15 @@ router.get("/estadisticas", async(req,res) => {
     } catch (error) {
         res.status(status.INTERNAL_SERVER_ERROR).json(error);
     }
+});
+
+router.post("/estado_prueba", async(req, res) => {
+    try {
+        let estado = await EstrategiaModel.actualizarEstadoPrueba(req.body.idPrueba, req.body.estado);
+        res.status(status.OK).json({code: 200, message: 'Estado actualizado'});
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json(error);
+    }
 })
 
 module.exports = router;

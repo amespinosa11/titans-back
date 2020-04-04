@@ -163,7 +163,7 @@ class EstrategiaModel {
         try {
             //script.script_file = '';
             this.saveFile(script.script_file);
-            script.script_file = 'prueba.js';
+            script.script_file = 'prueba.spec.js';
             let nuevoScript = await db('script').returning('id_script').insert(script);
             console.log('RESULTADO AL CREAR SCRIPT : ', nuevoScript);
         } catch (error) {
@@ -187,7 +187,7 @@ class EstrategiaModel {
         const base64Data = file.replace(/^data:text\/javascript;base64,/, "");
         let f = new Buffer(base64Data, 'base64');
         // Falta colocar nombre de script unico
-        fs.writeFile("../files/prueba.js", f, 'base64', function(err) {
+        fs.writeFile("../files/prueba.spec.js", f, 'base64', function(err) {
             console.log(err);
         });
     }

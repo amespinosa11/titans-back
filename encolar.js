@@ -1,6 +1,8 @@
 const SQS = require('./services/sqs/sqs');
 const sqs = new SQS();
 
+const CronJob = require('cron').CronJob;
+
 const estrategiaModel = require('./services/estrategia/model');
 const EstrategiaModel = new estrategiaModel();
 
@@ -41,7 +43,14 @@ const obtenerPruebasPendientes = async() => {
     }
 }
 
-obtenerPruebasPendientes();
+const job = new CronJob('0 */1 * * * *', async() => {
+    console.log('*** Vamos a procesar pruebas ***');
+    obtenerPruebasPendientes();
+});
+
+job.start();
+
+
 //encolarMensajes('Hello Home2!', '');
 //obtenerCantidadMensajes('');
 //desencolarMensajes(``);
