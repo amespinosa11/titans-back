@@ -9,10 +9,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({origin: 'http://localhost:4200'}));
 
 // Routes
-const routes = require("./services/example/api")
+const testingRoutes = require("./services/testingServices/api")
 const estrategiaRoutes = require("./services/estrategia/api")
 
-app.use("/testingTool", routes);
+app.use("/testingTool", testingRoutes);
 app.use("/estrategias", estrategiaRoutes);
 
 

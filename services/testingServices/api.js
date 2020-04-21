@@ -10,7 +10,7 @@ router.get("/getVersions", async (req, res) => {
         console.log(versions);
         res.status(status.OK).json({code: 200, data: versions});
     } catch (error) {
-        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "Vesriones no encontradas"});
     }  
 });
 router.get("/getApplications", async (req, res) => {
@@ -19,7 +19,7 @@ router.get("/getApplications", async (req, res) => {
         console.log(applications);
         res.status(status.OK).json({code: 200, data: applications});
     } catch (error) {
-        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "Aplicaciones no encontradas"});
     }
 });
 router.get("/getToolsAvailable", async (req, res) => {
@@ -28,7 +28,7 @@ router.get("/getToolsAvailable", async (req, res) => {
         console.log(toolsAvailable);
         res.status(status.OK).json({code: 200, data: toolsAvailable});
     } catch (error) {
-        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "Herramientas no encontradas"});
     }    
 });
 router.get("/getTypeOfTests", async (req, res) => {
@@ -37,7 +37,7 @@ router.get("/getTypeOfTests", async (req, res) => {
         console.log(typeOfTests);
         res.status(status.OK).json({code: 200, data: typeOfTests});
     } catch (error) {
-        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "Test no encontrados"});
     }
 });
 router.get("/getStrategies", async (req, res) => {
@@ -46,9 +46,44 @@ router.get("/getStrategies", async (req, res) => {
         console.log(strategies);
         res.status(status.OK).json({code: 200, data: strategies});  
     } catch (error) {
-        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "Registros no encontrados"});
     }
 });
+
+router.get("/getBrowserMatrices/:tipo_aplicacion", async (req, res) => {
+    try {
+        console.log(req.params.tipo_aplicacion);
+        let result = await TestingModel.getBrowserMatrices(req.params.tipo_aplicacion);
+        console.log(result);
+        res.status(status.OK).json({code: 200, data: result}); 
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "Registros no encontrados"});
+    }
+});
+
+router.get("/getTestsAndTools/:tipo_aplicacion", async (req, res) => {
+    try {
+        console.log(req.params.tipo_aplicacion);
+        let result = await TestingModel.getTestsAndTools(req.params.tipo_aplicacion);
+        console.log(result);
+        res.status(status.OK).json({code: 200, data: result});  
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "Registros no encontrados"});
+    }
+});
+
+router.get("/getScriptsAvailable/:tipo_aplicacion/:herramienta", async (req, res) => {
+    try {
+        console.log(req.params.tipo_aplicacion);
+        console.log(req.params.herramienta);
+        let result = await TestingModel.getScriptsAvailable(req.params.tipo_aplicacion,req.params.herramienta);
+        console.log(result);
+        res.status(status.OK).json({code: 200, data: result}); 
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "No hay scripts disponibles"});
+    }
+});
+
 
 router.get("/getTestState/:testId", async (req, res) => {
     try {
@@ -56,7 +91,7 @@ router.get("/getTestState/:testId", async (req, res) => {
         let state = await TestingModel.getTestState(req.params.testId);
         res.status(status.OK).json({code: 200, data: state});
     } catch (error) {
-        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "Registros no encontrados"});
     }
 });
 router.get("/getTestResult/:testId", async (req, res) => {
@@ -66,7 +101,7 @@ router.get("/getTestResult/:testId", async (req, res) => {
         console.log(result);
         res.status(status.OK).json({code: 200, data: result});  
     } catch (error) {
-        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: error});
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "Registros no encontrados"});
     }  
 });
 
