@@ -72,11 +72,11 @@ router.get("/getTestsAndTools/:tipo_aplicacion", async (req, res) => {
     }
 });
 
-router.get("/getScriptsAvailable/:tipo_aplicacion/:herramienta", async (req, res) => {
+router.get("/getScriptsAvailable/:tipo_prueba/:herramienta", async (req, res) => {
     try {
-        console.log(req.params.tipo_aplicacion);
+        console.log(req.params.tipo_prueba);
         console.log(req.params.herramienta);
-        let result = await TestingModel.getScriptsAvailable(req.params.tipo_aplicacion,req.params.herramienta);
+        let result = await TestingModel.getScriptsAvailable(req.params.tipo_prueba,req.params.herramienta);
         console.log(result);
         res.status(status.OK).json({code: 200, data: result}); 
     } catch (error) {

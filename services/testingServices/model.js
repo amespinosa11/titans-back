@@ -68,25 +68,22 @@ class TestingModel {
         return matricesAndBrowsersAvailable;
     }
 
-    async getScriptsAvailable(typeApp, typeTool) {
-        let result = [];//resultado global de la consulta
-        let positionCounter = 0
-        let testAndtoolsAvailable = await db.select('*').from('tipo_prueba_herramienta').where('tipo_aplicacion', typeApp).andWhere('herramienta', '=', typeTool)
-        //console.log(testAndtoolsAvailable);
+    async getScriptsAvailable(testType, typeTool) {
+        let testAndtoolAvailable = await db.from('tipo_prueba_herramienta').where('tipo_prueba', testType).andWhere('herramienta', '=', typeTool).first()
+        //console.log(testAndtoolAvailable);
 
-        for (let testAndtoolAvailable of testAndtoolsAvailable) {
-            //console.log(testAndtoolAvailable.id_tipo_prueba_herramienta);
-            let scripts = await db.select('*').from('script').where('id_tipo_prueba_herramienta', testAndtoolAvailable.id_tipo_prueba_herramienta);
-            //console.log(scripts.length);
-            if (scripts.length > 0) {
-                result[positionCounter++] = scripts
-            }
-        }
-        if(result.length==0){
+        if (testAndtoolAvailable.length == 0) {
             throw error
         }
-        //console.log(result);
-        return result;
+
+        //console.log(testAndtoolAvailable.id_tipo_prueba_herramienta);
+        let scripts = await db.select('*').from('script').where('id_tipo_prueba_herramienta', testAndtoolAvailable.id_tipo_prueba_herramienta);
+        //console.log(scripts.length);
+
+        if (scripts.length == 0) {
+            throw error
+        }
+        return scripts;
     }
 
     async getAddTest(params) {
