@@ -70,6 +70,24 @@ class TestingModel {
 
     async getScriptsAvailable(testType, typeTool) {
         let testAndtoolAvailable = await db.from('tipo_prueba_herramienta').where('tipo_prueba', testType).andWhere('herramienta', '=', typeTool).first()
+        console.log(testAndtoolAvailable);
+
+        if (testAndtoolAvailable.length == 0) {
+            throw error
+        }
+
+        //console.log(testAndtoolAvailable.id_tipo_prueba_herramienta);
+        let scripts = await db.select('*').from('script').where('id_tipo_prueba_herramienta', testAndtoolAvailable.id_tipo_prueba_herramienta);
+        //console.log(scripts.length);
+
+        if (scripts.length == 0) {
+            throw error
+        }
+        return scripts;
+    }
+
+    async getScriptsNotTestType(testType) {
+        let testAndtoolAvailable = await db.from('tipo_prueba_herramienta').whereNull('herramienta').andWhere('tipo_prueba', '=', testType).first()
         //console.log(testAndtoolAvailable);
 
         if (testAndtoolAvailable.length == 0) {

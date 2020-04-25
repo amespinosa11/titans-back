@@ -84,6 +84,17 @@ router.get("/getScriptsAvailable/:tipo_prueba/:herramienta", async (req, res) =>
     }
 });
 
+router.get("/getScriptsAvailable/:tipo_prueba", async (req, res) => {
+    try {
+        //console.log('getScriptsNotTestType');
+        let result = await TestingModel.getScriptsNotTestType(req.params.tipo_prueba);
+        console.log(result);
+        res.status(status.OK).json({code: 200, data: result}); 
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "No hay scripts disponibles"});
+    }
+});
+
 
 router.get("/getTestState/:testId", async (req, res) => {
     try {
