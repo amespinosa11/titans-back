@@ -95,6 +95,16 @@ router.get("/getScriptsAvailable/:tipo_prueba", async (req, res) => {
     }
 });
 
+router.get("/getAllScripts", async (req, res) => {
+    try {
+        let result = await TestingModel.getAllScripts();
+        console.log(result);
+        res.status(status.OK).json({code: 200, data: result}); 
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({code: 500, error: "No hay scripts disponibles"});
+    }
+});
+
 
 router.get("/getTestState/:testId", async (req, res) => {
     try {

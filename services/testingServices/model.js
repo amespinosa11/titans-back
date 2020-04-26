@@ -104,6 +104,16 @@ class TestingModel {
         return scripts;
     }
 
+    async getAllScripts() {
+        let scripts = await db.select('*').from('script');
+        console.log(scripts);
+
+        if (scripts.length == 0) {
+            throw error
+        }
+        return scripts;
+    }
+
     async getAddTest(params) {
         /*ejemplo del insert aun no funcional porque no se evaluan excepciones*/
         const toolsAvailable = await db.insert([{ x: 20 }, { y: 30 }, { x: 10, y: 20 }])
