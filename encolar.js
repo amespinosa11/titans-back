@@ -34,7 +34,7 @@ const obtenerPruebasPendientes = async() => {
         //let prueba = pruebas[0];
         let fallo = false;
         for(let i = 0; i < prueba.cantidadEjecuciones && !fallo; i++) {
-            let encolar = await encolarMensajes(prueba, `https://sqs.us-east-1.amazonaws.com/677094465990/Cypress`)
+            let encolar = await encolarMensajes(prueba, process.env.QUEUE_URL)
             if(encolar.code !== 100) {
                 await EstrategiaModel.actualizarEstadoPrueba(prueba.idPrueba, 'pendiente');
                 fallo = true;

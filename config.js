@@ -6,7 +6,7 @@ const database = knex({
     host: process.env.DB_HOST, // Your local host IP
     user: process.env.DB_USER, // Your postgres user name
     password: process.env.DB_PASSWORD, // Your postgres user password
-    database: process.env.DATABASE, // Your database name,
+    database: process.env.DATABASE_NAME, // Your database name,
     ssl: true // PARA CORRER LOCALMENTE SE DEBE CAMBIAR A FALSE
   }
 });
