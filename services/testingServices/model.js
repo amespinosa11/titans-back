@@ -35,7 +35,7 @@ class TestingModel {
 
     async getStrategies() {
         const strategies = await db.select('*').from('estrategia');
-        return strategies
+        return strategies;
     }
 
     async getTypeOfTests() {

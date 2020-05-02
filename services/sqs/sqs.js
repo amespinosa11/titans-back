@@ -75,7 +75,7 @@ class SQS {
                 "All"
              ],
              QueueUrl: queueUrl,
-             VisibilityTimeout: 60,
+             VisibilityTimeout: 120,
              WaitTimeSeconds: 0
         };
     

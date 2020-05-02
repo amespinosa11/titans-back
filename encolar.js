@@ -30,11 +30,11 @@ const eliminarMensaje = async(cola,receipt) => {
 
 const obtenerPruebasPendientes = async() => {
     const pruebas = await EstrategiaModel.getPendingTests();
-    if(pruebas.length > 0) {
-        let prueba = pruebas[0];
+    for(let prueba of pruebas) {
+        //let prueba = pruebas[0];
         let fallo = false;
         for(let i = 0; i < prueba.cantidadEjecuciones && !fallo; i++) {
-            let encolar = await encolarMensajes(prueba, `${process.env.ROOT_QUEUE}/${prueba.herramienta}`)
+            let encolar = await encolarMensajes(prueba, `https://sqs.us-east-1.amazonaws.com/677094465990/Cypress`)
             if(encolar.code !== 100) {
                 await EstrategiaModel.actualizarEstadoPrueba(prueba.idPrueba, 'pendiente');
                 fallo = true;
@@ -43,7 +43,7 @@ const obtenerPruebasPendientes = async() => {
     }
 }
 
-const job = new CronJob('0 */1 * * * *', async() => {
+const job = new CronJob('*/20 * * * * *', async() => {
     console.log('*** Vamos a procesar pruebas ***');
     obtenerPruebasPendientes();
 });

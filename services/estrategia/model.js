@@ -52,12 +52,13 @@ class EstrategiaModel {
         let fallido = 0;
         let satisfactorio = 0;
         
+        console.log(estrategia,resultados);
         for(let resultado of resultados) {
-            pendiente = resultado.estado === 'pendiente' ? pendiente + 1 : pendiente;
-            enCola = resultado.estado === 'en cola' ? enCola + 1 : enCola;
-            enEjecucion = resultado.estado === 'en ejecucion' ? enEjecucion + 1 : enEjecucion;
-            fallido = resultado.estado === 'fallida' ? fallido + 1 : fallido;
-            satisfactorio = resultado.satisfactorio === 'satisfactoria' ? satisfactorio + 1 : satisfactorio;
+            pendiente = resultado.estado === 'PENDIENTE' ? pendiente + 1 : pendiente;
+            enCola = resultado.estado === 'EN_COLA' ? enCola + 1 : enCola;
+            enEjecucion = resultado.estado === 'EN_EJECUCION' ? enEjecucion + 1 : enEjecucion;
+            fallido = resultado.estado === 'FALLIDA' ? fallido + 1 : fallido;
+            satisfactorio = resultado.satisfactorio === 'SATISFACTORIA' ? satisfactorio + 1 : satisfactorio;
         }
 
         if(pendiente > resultados.length/2 ) {
@@ -73,10 +74,23 @@ class EstrategiaModel {
         }
     }
 
+    async getEstrategiasConEstado() {
+        const strategies = await db.select('*').from('estrategia');
+        for(let estrategia of strategies) {
+            let estado = await this.establecerEstadoEstrategia(estrategia);
+            console.log(estado);
+            estrategia.estado = estado;
+        }
+        return strategies;
+    }
+
     async insertEstrategia(estrategia) {
         try {
             // Primero se debe insertar la estrategia
-            const nuevaEstrategia = await db('estrategia').returning('id_estrategia').insert(estrategia.estrategia);
+            const nuevaEstrategia = await db('estrategia').returning('id_estrategia').insert({
+                id_aplicacion: parseInt(estrategia.id_aplicacion),
+                descripcion: estrategia.descripcion
+            });
             console.log('RESULTADO AL CREAR ESTRATEGIA : ', nuevaEstrategia);
 
             if(nuevaEstrategia.length > 0) {
@@ -101,26 +115,31 @@ class EstrategiaModel {
     async insertPrueba(prueba) {
         try {
             let nuevaPrueba = {
-                tipo: prueba.tipo,
-                herramienta: prueba.herramienta,
-                modo: prueba.modo,
+                id_tipo_prueba_herramienta : prueba.id_tipo_herramienta_prueba,
+                modo: prueba.modo.toUpperCase(),
                 descripcion: prueba.descripcion,
                 cantidad_ejecuciones: prueba.cantidad_ejecuciones,
                 fecha_ejecucion: prueba.fecha_ejecucion,
                 fecha_finalizacion: prueba.fecha_finalizacion,
-                estado: 'pendiente',
+                estado: 'PENDIENTE',
                 tiempo_ejecucion: 0,
                 id_estrategia : prueba.id_estrategia
             } 
-            // Si viene una matriz se debe insertar primero
-            if(prueba.matrizPrueba) {
-                let matriz = await this.insertMatrizPrueba(prueba.matrizPrueba);
-                nuevaPrueba.id_matriz_prueba = matriz.length > 0 ? matriz[0] : null;
-            }
+
             // Se debe agregar prueba
             let idPrueba = await db('prueba').returning('id_prueba').insert(nuevaPrueba);
             console.log('RESULTADO AL CREAR PRUEBA : ', idPrueba);
             idPrueba = idPrueba.length > 0 ? idPrueba[0] : null;
+
+            // Si vienen matrices de prueba se deben insertar primero. Recorrido.
+            for(let matrizFront of prueba.matrizPrueba) {
+                let matriz = await this.insertMatrizPrueba(matrizFront);
+                let idMatriz = matriz.length > 0 ? matriz[0] : null;
+                // Se debe insertar los ids de matriz y la prueba en tabla intermedia
+                let inter = await this.insertarMatrizPruebaIntermedio(idPrueba, idMatriz);
+                console.log('RESULTADO AL AGREGAR INTERMEDIO MATRIZ - PRUEBA' , inter);
+            }
+
             // Si vienen scripts se deben agregar
             for(let script of prueba.scripts) {
                 script.id_prueba = idPrueba;
@@ -140,7 +159,8 @@ class EstrategiaModel {
 
     async insertMatrizPrueba(matrizPrueba) {
         try {
-            const nuevaMatriz = await db('matriz_prueba').returning('id_matriz_prueba').insert(matrizPrueba);
+            matrizPrueba.tipo_aplicacion = matrizPrueba.tipo_aplicacion.toUpperCase();
+            const nuevaMatriz = await db('matriz_tipoapp').returning('id_matriz_tipoapp').insert(matrizPrueba);
             console.log('RESULTADO AL CREAR MATRIZ DE PRUEBA : ', nuevaMatriz);
             return nuevaMatriz;
         } catch (error) {
@@ -162,8 +182,11 @@ class EstrategiaModel {
     async insertScript(script) {
         try {
             //script.script_file = '';
-            this.saveFile(script.script_file);
-            script.script_file = 'prueba.spec.js';
+            if(script.script_file.includes('base64')) {
+                this.saveFile(script.script_file, script.descripcion);
+            }
+            const nom = moment().format('YYYY-MM-DD HH:mm'); 
+            script.script_file = `${script.descripcion}-${moment(nom).toDate().getTime()}.spec.js`;
             let nuevoScript = await db('script').returning('id_script').insert(script);
             console.log('RESULTADO AL CREAR SCRIPT : ', nuevoScript);
         } catch (error) {
@@ -183,20 +206,25 @@ class EstrategiaModel {
         }
     }
 
-    saveFile(file) {
+    saveFile(file, descripcion) {
         const base64Data = file.replace(/^data:text\/javascript;base64,/, "");
         let f = new Buffer(base64Data, 'base64');
         // Falta colocar nombre de script unico
-        fs.writeFile("../files/prueba.spec.js", f, 'base64', function(err) {
+        const nom = moment().format('YYYY-MM-DD HH:mm');
+        const nombreScript = `${descripcion}-${moment(nom).toDate().getTime()}.spec.js`;
+        fs.writeFile(`../files/${nombreScript}`, f, 'base64', function(err) {
             console.log(err);
         });
+        //return nombreScript;
     }
 
     async getPendingTests() {
         let pruebasMandar = [];
         const ahora = moment().subtract(2, 'minutes').format('YYYY-MM-DD HH:mm:ss');
         const despues = moment().add(5, 'minutes').format('YYYY-MM-DD HH:mm:ss');
-        let tests = await db.select('*').from('prueba').whereRaw(`estado='pendiente'AND fecha_ejecucion BETWEEN ? and ?`, [ahora,despues])
+        let tests = await db.select('*').from('prueba')
+        .join('tipo_prueba_herramienta', 'tipo_prueba_herramienta.id_tipo_prueba_herramienta', '=', 'prueba.id_tipo_prueba_herramienta')
+        .whereRaw(`estado='PENDIENTE'AND fecha_ejecucion BETWEEN ? and ?`, [ahora,despues])
         .limit(1);
 
 
@@ -204,16 +232,19 @@ class EstrategiaModel {
         if(tests.length > 0) {
             let test = tests[0];
             // cambiar estado
-            let estado = await this.actualizarEstadoPrueba(test.id_prueba, 'enCola');
+            let estado = await this.actualizarEstadoPrueba(test.id_prueba, 'EN_COLA');
             // Buscar info de matriz de prueba
-            const matriz = await db.select('*').from('matriz_prueba').where('id_matriz_prueba', test.id_matriz_prueba);
-            console.log(matriz);
+            const matrices = await db.select('*').from('matriz_tipoapp_prueba')
+            .join('matriz_tipoapp', 'matriz_tipoapp_prueba.id_matriz_tipoapp', '=', 'matriz_tipoapp.id_matriz_tipoapp')
+            .where('id_prueba', test.id_prueba);
+            console.log(matrices);
             // Buscar si tiene scripts
             if(parseInt(test.cantidad_ejecuciones) === 0) {
                 // Busco todos los scripts
-                let scripts = await this.processScripts(test, matriz[0]);
-                pruebasMandar = scripts;
-                //console.log(scripts);
+                for(let ma of matrices) {
+                    let scripts = await this.processScripts(test,ma);
+                    pruebasMandar = pruebasMandar.concat(scripts);
+                }
             } else {
                 // Armar la prueba 
                 prueba = {
@@ -244,7 +275,7 @@ class EstrategiaModel {
                 esScript: true,
                 cantidadEjecuciones: parseInt(script.cant_ejecuciones),
                 scriptFile: script.script_file,
-                tipo: test.tipo,
+                tipo: test.tipo_prueba,
                 herramienta: test.herramienta,
                 modo: test.modo,
                 navegador: matriz.navegador,
@@ -263,6 +294,16 @@ class EstrategiaModel {
           thisKeyIsSkipped: undefined
         });
         console.log('ESTADO: ', actualizarEstado);
+    }
+
+    async insertarMatrizPruebaIntermedio(idPrueba, idMatriz){
+        const objMatrizPrueba = {
+            id_prueba: idPrueba,
+            id_matriz_tipoapp: idMatriz
+        }
+        const interMatrizPrueba = await db('matriz_tipoapp_prueba').returning('id_matriz_tipoapp_prueba')
+        .insert(objMatrizPrueba);
+        console.log('RESULTADO AL CREAR INTER : ', interMatrizPrueba);
     }
 
 }

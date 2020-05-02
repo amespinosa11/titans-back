@@ -32,4 +32,13 @@ router.post("/estado_prueba", async(req, res) => {
     }
 })
 
+router.get('/estragias_general', async(req,res) => {
+    try {
+        let estadisticas = await EstrategiaModel.getEstrategiasConEstado();
+        res.status(status.OK).json(estadisticas);
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json(error);
+    }
+})
+
 module.exports = router;
