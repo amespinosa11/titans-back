@@ -64,7 +64,7 @@ class SQS {
                         },
                         "apkAdress": {
                             DataType: "String",
-                            StringValue: message.apk
+                            StringValue: message.apkAdress
                         }
                     }
             ,

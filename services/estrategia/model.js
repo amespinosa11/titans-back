@@ -224,7 +224,6 @@ class EstrategiaModel {
             .join('estrategia', 'aplicacion.id_aplicacion', '=', 'estrategia.id_aplicacion')
             .whereRaw('estrategia.id_estrategia = ?', [idStrategy]);
 
-        console.log("getAppData:",tests);
         let pruebas = [];
         const scripts = await db.select('*').from('script').where('id_prueba', idTest);
         let prueba = null;
@@ -242,7 +241,7 @@ class EstrategiaModel {
     }
 
 
-async getPendingTests(typeTest = 'WEB'){
+async getPendingTests(typeTest){
     let pruebasMandar = [];
     const ahora = moment().subtract(2, 'minutes').format('YYYY-MM-DD HH:mm:ss');
     const despues = moment().add(5, 'minutes').format('YYYY-MM-DD HH:mm:ss');
@@ -251,32 +250,25 @@ async getPendingTests(typeTest = 'WEB'){
         .whereRaw(`estado='PENDIENTE'AND fecha_ejecucion BETWEEN ? and ?`, [ahora, despues])
         .limit(1);
 
-
-    console.log("tests: ", tests);
-
     let prueba = null;
 
     if (tests.length > 0) {
         let test = tests[0];
 
-        console.log("typeTest: ", typeTest);
-
         if (typeTest == "MOVIL") {
-            let estado = await this.actualizarEstadoPrueba(test.id_prueba, 'EN_COLA');
+            await this.actualizarEstadoPrueba(test.id_prueba, 'EN_COLA');
 
-            prueba = await this.getAppData(test.id_prueba, test.id_estrategia);
-            console.log("prueba: ", prueba);
-            return prueba;
+            let prueba1 = await this.getAppData(test.id_prueba, test.id_estrategia);
+            return prueba1 !== undefined ? prueba1 : [];
         }
         else {
 
             // cambiar estado
-            let estado = await this.actualizarEstadoPrueba(test.id_prueba, 'EN_COLA');
+            await this.actualizarEstadoPrueba(test.id_prueba, 'EN_COLA');
             // Buscar info de matriz de prueba
             const matrices = await db.select('*').from('matriz_tipoapp_prueba')
                 .join('matriz_tipoapp', 'matriz_tipoapp_prueba.id_matriz_tipoapp', '=', 'matriz_tipoapp.id_matriz_tipoapp')
                 .where('id_prueba', test.id_prueba);
-            console.log(matrices);
             // Buscar si tiene scripts
             if (parseInt(test.cantidad_ejecuciones) === 0) {
                 // Busco todos los scripts
@@ -300,9 +292,9 @@ async getPendingTests(typeTest = 'WEB'){
                 pruebasMandar.push(prueba);
             }
         }
-        console.log('PRUEBAS A MANDAR ', pruebasMandar);
         return pruebasMandar;
     }
+    return pruebasMandar;
 }
 
 async processScripts(test, matriz) {

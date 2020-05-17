@@ -30,17 +30,15 @@ const eliminarMensaje = async (cola, receipt) => {
     console.log(a);
 }
 
-const obtenerPruebasPendientes = async (typeTest) => {
+const obtenerPruebasPendientes = async (typeTest, queue) => {
     const pruebas = await EstrategiaModel.getPendingTests(typeTest);
+    console.log('PRUEBAS : ', pruebas);
     for (let prueba of pruebas) {
-        console.log('prueba: ', prueba);
-        //let prueba = pruebas[0];
         let fallo = false;
         for (let i = 0; i < prueba.cantidadEjecuciones && !fallo; i++) {
-            let encolar = await encolarMensajes(prueba, process.env.QUEUE_URL, typeTest)
-            console.log('encolar: ', encolar);
+            let encolar = await encolarMensajes(prueba, queue, typeTest)
             if (encolar.code !== 100) {
-                await EstrategiaModel.actualizarEstadoPrueba(prueba.idPrueba, 'pendiente');
+                await EstrategiaModel.actualizarEstadoPrueba(prueba.idPrueba, 'PENDIENTE');
                 fallo = true;
             }
         }
@@ -49,8 +47,8 @@ const obtenerPruebasPendientes = async (typeTest) => {
 
 const job = new CronJob('*/20 * * * * *', async () => {
     console.log('*** Vamos a procesar pruebas ***');
-    obtenerPruebasPendientes('WEB');
-    obtenerPruebasPendientes('MOVIL');
+    obtenerPruebasPendientes('WEB', '');
+    obtenerPruebasPendientes('MOVIL', '');
 });
 
 job.start();
