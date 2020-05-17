@@ -6,26 +6,26 @@ class EstrategiaModel {
 
     async obtenerEstadisticas() {
         try {
-            let totales = await db('estrategia').count('id_estrategia', {as: 'totales'});
+            let totales = await db('estrategia').count('id_estrategia', { as: 'totales' });
             let estrategias = await db.select('id_estrategia').from('estrategia');
             let estadisticas = await this.resutadosEstadisticas(estrategias, totales);
-            return {code: 200, data: estadisticas};
+            return { code: 200, data: estadisticas };
         } catch (error) {
             console.log(error);
-            throw({code: 500, error: error});
+            throw ({ code: 500, error: error });
         }
     }
 
     async resutadosEstadisticas(estrategias, totales) {
         let res = {
             totales: totales.length > 0 ? parseInt(totales[0].totales) : 0,
-            pendientes : 0,
-            enCola : 0,
-            enEjecucion : 0,
-            fallidas : 0,
-            satisfactorias : 0
+            pendientes: 0,
+            enCola: 0,
+            enEjecucion: 0,
+            fallidas: 0,
+            satisfactorias: 0
         }
-        for(let estrategia of estrategias) {
+        for (let estrategia of estrategias) {
             let estado = await this.establecerEstadoEstrategia(estrategia);
             res.pendientes = estado == 'pendiente' ? res.pendientes + 1 : res.pendientes;
             res.enCola = estado === 'enCola' ? res.enCola + 1 : res.enCola;
@@ -51,9 +51,9 @@ class EstrategiaModel {
         let enEjecucion = 0;
         let fallido = 0;
         let satisfactorio = 0;
-        
-        console.log(estrategia,resultados);
-        for(let resultado of resultados) {
+
+        console.log(estrategia, resultados);
+        for (let resultado of resultados) {
             pendiente = resultado.estado === 'PENDIENTE' ? pendiente + 1 : pendiente;
             enCola = resultado.estado === 'EN_COLA' ? enCola + 1 : enCola;
             enEjecucion = resultado.estado === 'EN_EJECUCION' ? enEjecucion + 1 : enEjecucion;
@@ -61,22 +61,22 @@ class EstrategiaModel {
             satisfactorio = resultado.satisfactorio === 'SATISFACTORIA' ? satisfactorio + 1 : satisfactorio;
         }
 
-        if(pendiente > resultados.length/2 ) {
+        if (pendiente > resultados.length / 2) {
             return 'pendiente';
-        } else if(enCola > resultados.length/2) {
+        } else if (enCola > resultados.length / 2) {
             return 'enCola';
-        } else if(enEjecucion > resultados.length/2) {
+        } else if (enEjecucion > resultados.length / 2) {
             return 'enEjecucion';
-        } else if(fallido > 1) {
+        } else if (fallido > 1) {
             return 'fallida'
-        } else if(satisfactorio === resultados.length) {
+        } else if (satisfactorio === resultados.length) {
             return 'satisfactoria';
         }
     }
 
     async getEstrategiasConEstado() {
         const strategies = await db.select('*').from('estrategia');
-        for(let estrategia of strategies) {
+        for (let estrategia of strategies) {
             let estado = await this.establecerEstadoEstrategia(estrategia);
             console.log(estado);
             estrategia.estado = estado;
@@ -93,21 +93,21 @@ class EstrategiaModel {
             });
             console.log('RESULTADO AL CREAR ESTRATEGIA : ', nuevaEstrategia);
 
-            if(nuevaEstrategia.length > 0) {
+            if (nuevaEstrategia.length > 0) {
                 // Se deben recorrer las pruebas para insertar cada una
-                for(let prueba of estrategia.pruebas) {
+                for (let prueba of estrategia.pruebas) {
                     prueba.id_estrategia = nuevaEstrategia[0];
                     let p = await this.insertPrueba(prueba);
                     console.log('ESTO ES P : ', p);
                 }
-                let mensaje = {code: 200, message: "Estrategía creada con exito"};
+                let mensaje = { code: 200, message: "Estrategía creada con exito" };
 
                 return mensaje;
             }
-            return {code: 500, message: "Error al crear estrategía"};
+            return { code: 500, message: "Error al crear estrategía" };
         } catch (error) {
             console.log(error);
-            throw({code: 500, message: "Error al crear estrategía", error: error}); 
+            throw ({ code: 500, message: "Error al crear estrategía", error: error });
             //return {code: 500, message: "Error al crear estrategía", error: error};
         }
     }
@@ -115,7 +115,7 @@ class EstrategiaModel {
     async insertPrueba(prueba) {
         try {
             let nuevaPrueba = {
-                id_tipo_prueba_herramienta : prueba.id_tipo_herramienta_prueba,
+                id_tipo_prueba_herramienta: prueba.id_tipo_herramienta_prueba,
                 modo: prueba.modo.toUpperCase(),
                 descripcion: prueba.descripcion,
                 cantidad_ejecuciones: prueba.cantidad_ejecuciones,
@@ -123,8 +123,8 @@ class EstrategiaModel {
                 fecha_finalizacion: prueba.fecha_finalizacion,
                 estado: 'PENDIENTE',
                 tiempo_ejecucion: 0,
-                id_estrategia : prueba.id_estrategia
-            } 
+                id_estrategia: prueba.id_estrategia
+            }
 
             // Se debe agregar prueba
             let idPrueba = await db('prueba').returning('id_prueba').insert(nuevaPrueba);
@@ -132,21 +132,21 @@ class EstrategiaModel {
             idPrueba = idPrueba.length > 0 ? idPrueba[0] : null;
 
             // Si vienen matrices de prueba se deben insertar primero. Recorrido.
-            for(let matrizFront of prueba.matrizPrueba) {
+            for (let matrizFront of prueba.matrizPrueba) {
                 let matriz = await this.insertMatrizPrueba(matrizFront);
                 let idMatriz = matriz.length > 0 ? matriz[0] : null;
                 // Se debe insertar los ids de matriz y la prueba en tabla intermedia
                 let inter = await this.insertarMatrizPruebaIntermedio(idPrueba, idMatriz);
-                console.log('RESULTADO AL AGREGAR INTERMEDIO MATRIZ - PRUEBA' , inter);
+                console.log('RESULTADO AL AGREGAR INTERMEDIO MATRIZ - PRUEBA', inter);
             }
 
             // Si vienen scripts se deben agregar
-            for(let script of prueba.scripts) {
+            for (let script of prueba.scripts) {
                 script.id_prueba = idPrueba;
                 await this.insertScript(script);
             }
             // Si vienen parametros se deben agregar
-            for(let parametro of prueba.parametros) {
+            for (let parametro of prueba.parametros) {
                 parametro.id_prueba = idPrueba;
                 await this.insertParametro(parametro);
             }
@@ -182,10 +182,10 @@ class EstrategiaModel {
     async insertScript(script) {
         try {
             //script.script_file = '';
-            if(script.script_file.includes('base64')) {
+            if (script.script_file.includes('base64')) {
                 this.saveFile(script.script_file, script.descripcion);
             }
-            const nom = moment().format('YYYY-MM-DD HH:mm'); 
+            const nom = moment().format('YYYY-MM-DD HH:mm');
             script.script_file = `${script.descripcion}-${moment(nom).toDate().getTime()}.spec.js`;
             let nuevoScript = await db('script').returning('id_script').insert(script);
             console.log('RESULTADO AL CREAR SCRIPT : ', nuevoScript);
@@ -212,37 +212,76 @@ class EstrategiaModel {
         // Falta colocar nombre de script unico
         const nom = moment().format('YYYY-MM-DD HH:mm');
         const nombreScript = `${descripcion}-${moment(nom).toDate().getTime()}.spec.js`;
-        fs.writeFile(`../files/${nombreScript}`, f, 'base64', function(err) {
+        fs.writeFile(`../files/${nombreScript}`, f, 'base64', function (err) {
             console.log(err);
         });
         //return nombreScript;
     }
 
-    async getPendingTests() {
-        let pruebasMandar = [];
-        const ahora = moment().subtract(2, 'minutes').format('YYYY-MM-DD HH:mm:ss');
-        const despues = moment().add(5, 'minutes').format('YYYY-MM-DD HH:mm:ss');
-        let tests = await db.select('*').from('prueba')
+    async getAppData(idTest, idStrategy) {
+
+        let tests = await db.select('*').from('aplicacion')
+            .join('estrategia', 'aplicacion.id_aplicacion', '=', 'estrategia.id_aplicacion')
+            .whereRaw('estrategia.id_estrategia = ?', [idStrategy]);
+
+        console.log("getAppData:",tests);
+        let pruebas = [];
+        const scripts = await db.select('*').from('script').where('id_prueba', idTest);
+        let prueba = null;
+        for (let script of scripts) {
+            prueba = {
+                idPrueba: idTest,
+                esScript: true,
+                cantidadEjecuciones: parseInt(script.cant_ejecuciones),
+                scriptFile: script.script_file,
+                apkAdress: tests[0].apk
+            }
+            pruebas.push(prueba);
+        }
+        return pruebas;
+    }
+
+
+async getPendingTests(typeTest = 'WEB'){
+    let pruebasMandar = [];
+    const ahora = moment().subtract(2, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+    const despues = moment().add(5, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+    let tests = await db.select('*').from('prueba')
         .join('tipo_prueba_herramienta', 'tipo_prueba_herramienta.id_tipo_prueba_herramienta', '=', 'prueba.id_tipo_prueba_herramienta')
-        .whereRaw(`estado='PENDIENTE'AND fecha_ejecucion BETWEEN ? and ?`, [ahora,despues])
+        .whereRaw(`estado='PENDIENTE'AND fecha_ejecucion BETWEEN ? and ?`, [ahora, despues])
         .limit(1);
 
 
-        let prueba = null;
-        if(tests.length > 0) {
-            let test = tests[0];
+    console.log("tests: ", tests);
+
+    let prueba = null;
+
+    if (tests.length > 0) {
+        let test = tests[0];
+
+        console.log("typeTest: ", typeTest);
+
+        if (typeTest == "MOVIL") {
+            let estado = await this.actualizarEstadoPrueba(test.id_prueba, 'EN_COLA');
+
+            prueba = await this.getAppData(test.id_prueba, test.id_estrategia);
+            console.log("prueba: ", prueba);
+            return prueba;
+        }
+        else {
+
             // cambiar estado
             let estado = await this.actualizarEstadoPrueba(test.id_prueba, 'EN_COLA');
             // Buscar info de matriz de prueba
             const matrices = await db.select('*').from('matriz_tipoapp_prueba')
-            .join('matriz_tipoapp', 'matriz_tipoapp_prueba.id_matriz_tipoapp', '=', 'matriz_tipoapp.id_matriz_tipoapp')
-            .where('id_prueba', test.id_prueba);
+                .join('matriz_tipoapp', 'matriz_tipoapp_prueba.id_matriz_tipoapp', '=', 'matriz_tipoapp.id_matriz_tipoapp')
+                .where('id_prueba', test.id_prueba);
             console.log(matrices);
             // Buscar si tiene scripts
-            if(parseInt(test.cantidad_ejecuciones) === 0) {
+            if (parseInt(test.cantidad_ejecuciones) === 0) {
                 // Busco todos los scripts
-                for(let ma of matrices) {
-                    let scripts = await this.processScripts(test,ma);
+                for (let ma of matrices) {
+                    let scripts = await this.processScripts(test, ma);
                     pruebasMandar = pruebasMandar.concat(scripts);
                 }
             } else {
@@ -264,47 +303,48 @@ class EstrategiaModel {
         console.log('PRUEBAS A MANDAR ', pruebasMandar);
         return pruebasMandar;
     }
+}
 
-    async processScripts(test, matriz) {
-        let pruebas = [];
-        const scripts = await db.select('*').from('script').where('id_prueba', test.id_prueba);
-        let prueba = null;
-        for(let script of scripts) {
-            prueba = {
-                idPrueba: test.id_prueba,
-                esScript: true,
-                cantidadEjecuciones: parseInt(script.cant_ejecuciones),
-                scriptFile: script.script_file,
-                tipo: test.tipo_prueba,
-                herramienta: test.herramienta,
-                modo: test.modo,
-                navegador: matriz.navegador,
-                resolucion: matriz.resolucion
-            }
-            pruebas.push(prueba);
+async processScripts(test, matriz) {
+    let pruebas = [];
+    const scripts = await db.select('*').from('script').where('id_prueba', test.id_prueba);
+    let prueba = null;
+    for (let script of scripts) {
+        prueba = {
+            idPrueba: test.id_prueba,
+            esScript: true,
+            cantidadEjecuciones: parseInt(script.cant_ejecuciones),
+            scriptFile: script.script_file,
+            tipo: test.tipo_prueba,
+            herramienta: test.herramienta,
+            modo: test.modo,
+            navegador: matriz.navegador,
+            resolucion: matriz.resolucion
         }
-        return pruebas;
+        pruebas.push(prueba);
     }
+    return pruebas;
+}
 
-    async actualizarEstadoPrueba(idPrueba, estado) {
-        const actualizarEstado = await db('prueba')
+async actualizarEstadoPrueba(idPrueba, estado) {
+    const actualizarEstado = await db('prueba')
         .where('id_prueba', '=', idPrueba)
         .update({
-          estado: estado,
-          thisKeyIsSkipped: undefined
+            estado: estado,
+            thisKeyIsSkipped: undefined
         });
-        console.log('ESTADO: ', actualizarEstado);
-    }
+    console.log('ESTADO: ', actualizarEstado);
+}
 
-    async insertarMatrizPruebaIntermedio(idPrueba, idMatriz){
-        const objMatrizPrueba = {
-            id_prueba: idPrueba,
-            id_matriz_tipoapp: idMatriz
-        }
-        const interMatrizPrueba = await db('matriz_tipoapp_prueba').returning('id_matriz_tipoapp_prueba')
-        .insert(objMatrizPrueba);
-        console.log('RESULTADO AL CREAR INTER : ', interMatrizPrueba);
+async insertarMatrizPruebaIntermedio(idPrueba, idMatriz){
+    const objMatrizPrueba = {
+        id_prueba: idPrueba,
+        id_matriz_tipoapp: idMatriz
     }
+    const interMatrizPrueba = await db('matriz_tipoapp_prueba').returning('id_matriz_tipoapp_prueba')
+        .insert(objMatrizPrueba);
+    console.log('RESULTADO AL CREAR INTER : ', interMatrizPrueba);
+}
 
 }
 
