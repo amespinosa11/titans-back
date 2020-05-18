@@ -39,6 +39,24 @@ router.get('/estragias_general', async(req,res) => {
     } catch (error) {
         res.status(status.INTERNAL_SERVER_ERROR).json(error);
     }
-})
+});
+
+router.post("/resultado", async (req, res) => {
+    try {
+        let resultado = await EstrategiaModel.insertarResultadoPrueba(req.body);
+        res.status(status.OK).json(resultado);
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json(error);
+    }  
+});
+
+router.get("/resultado/:idEstrategia", async (req, res) => {
+    try {
+        let resultados = await EstrategiaModel.obtenerResultadosEstrategia(req.params.idEstrategia);
+        res.status(status.OK).json(resultados);
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json(error);
+    }  
+});
 
 module.exports = router;

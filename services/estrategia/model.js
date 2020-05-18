@@ -338,6 +338,28 @@ async insertarMatrizPruebaIntermedio(idPrueba, idMatriz){
     console.log('RESULTADO AL CREAR INTER : ', interMatrizPrueba);
 }
 
+async insertarResultadoPrueba(resultado) {
+    const nuevoResultado = await db('resultado').returning('id_resultado').insert(resultado);
+    return nuevoResultado.length > 0 ? { code: 200, message: "Resultado creado con exito" }
+    : { code: 500, message: "No fue posible crear el resultado" };
+}
+
+async obtenerResultadosEstrategia(idEstrategia) {
+    console.log(idEstrategia);
+    const results = await db('resultado')
+    .join('prueba', 'resultado.id_prueba', '=', 'prueba.id_prueba')
+    .where('prueba.id_estrategia', '=', idEstrategia)
+    .select('resultado.*')
+
+    for(let result of results) {
+        if(result.tipo === 'LOG') {
+            result.data = JSON.parse(fs.readFileSync(result.url,'utf8'));
+        }
+    }
+    console.log(results);
+    return results;
+}
+
 }
 
 module.exports = EstrategiaModel;
